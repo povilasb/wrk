@@ -1,6 +1,10 @@
 CFLAGS  := -std=c99 -Wall -O2 -D_REENTRANT
 LIBS    := -lpthread -lm -lcrypto -lssl
 
+CMOCKA_DIR := $(CURDIR)/deps/cmocka
+CMOCKA_LIB_DIR := $(CMOCKA_DIR)/build/src
+CMOCKA_LIB := $(CMOCKA_LIB_DIR)/libcmocka.so
+
 TARGET  := $(shell uname -s | tr '[A-Z]' '[a-z]' 2>/dev/null || echo unknown)
 
 ifeq ($(TARGET), sunos)
@@ -34,6 +38,16 @@ all: $(BIN)
 clean:
 	$(RM) $(BIN) obj/*
 	@$(MAKE) -C deps/luajit clean
+
+test: $(CMOCKA_LIB)
+	mkdir -p build/tests
+	$(CC) $(CFLAGS) -I $(CMOCKA_DIR)/include -L$(CMOCKA_LIB_DIR) -lcmocka \
+		tests/test_options.c -o build/tests/test_options
+	LD_LIBRARY_PATH=$(CMOCKA_LIB_DIR) build/tests/test_options
+.PHONY: test
+
+$(CMOCKA_LIB):
+	cd $(CMOCKA_DIR) && mkdir -p build && cd build && cmake .. && make
 
 $(BIN): $(OBJ)
 	@echo LINK $(BIN)
