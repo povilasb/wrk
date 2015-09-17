@@ -28,8 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <unistd.h>
 
 #include <sys/epoll.h>
+
+#include "ae.h"
+#include "zmalloc.h"
+
 
 typedef struct aeApiState {
     int epfd;

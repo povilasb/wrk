@@ -1,5 +1,13 @@
 #include <getopt.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "config.h"
+#include "http_parser.h"
+#include "wrk.h"
+#include "units.h"
+#include "script.h"
 
 static struct option longopts[] = {
     { "connections", required_argument, NULL, 'c' },
@@ -14,7 +22,7 @@ static struct option longopts[] = {
     { NULL,          0,                 NULL,  0  }
 };
 
-static int parse_args(struct config *cfg, char **url, struct http_parser_url *parts, char **headers, int argc, char **argv) {
+int parse_args(struct config *cfg, char **url, struct http_parser_url *parts, char **headers, int argc, char **argv) {
     char **header = headers;
     int c;
 
