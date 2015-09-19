@@ -23,7 +23,7 @@ endif
 
 SRC  := wrk.c net.c ssl.c aprintf.c stats.c script.c units.c \
 		ae.c zmalloc.c http_parser.c
-src_files = $(addprefix src/, $(SRC))
+src_files = $(addprefix src/, $(filter-out wrk.c, $(SRC)) )
 BIN  := wrk
 
 ODIR := obj
@@ -43,7 +43,8 @@ clean:
 test: $(CMOCKA_LIB)
 	mkdir -p build/tests
 	$(CC) $(CFLAGS) -I $(CMOCKA_DIR)/include -L$(CMOCKA_LIB_DIR) -lcmocka \
-		tests/test_options.c $(src_files) -o build/tests/test_options
+		tests/test_options.c $(src_files) $(LIBS) $(LDFLAGS) \
+		-o build/tests/test_options
 	LD_LIBRARY_PATH=$(CMOCKA_LIB_DIR) build/tests/test_options
 .PHONY: test
 
