@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <setjmp.h>
-#include <stdarg.h>
 #include <assert.h>
 
 #include "../src/cli_options.h"
