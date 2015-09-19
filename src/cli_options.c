@@ -17,6 +17,8 @@ static struct option longopts[] = {
     { "header",      required_argument, NULL, 'H' },
     { "latency",     no_argument,       NULL, 'L' },
     { "timeout",     required_argument, NULL, 'T' },
+    { "proxy",       required_argument, NULL, 'x' },
+    { "proxy-user",   required_argument, NULL, 'U' },
     { "help",        no_argument,       NULL, 'h' },
     { "version",     no_argument,       NULL, 'v' },
     { NULL,          0,                 NULL,  0  }
@@ -32,7 +34,7 @@ int parse_args(struct config *cfg, char **url, struct http_parser_url *parts, ch
     cfg->duration    = 10;
     cfg->timeout     = SOCKET_TIMEOUT_MS;
 
-    while ((c = getopt_long(argc, argv, "t:c:d:s:H:T:Lrv?", longopts, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "t:c:d:s:H:T:x:U:Lrv?", longopts, NULL)) != -1) {
         switch (c) {
             case 't':
                 if (scan_metric(optarg, &cfg->threads)) return -1;
@@ -59,6 +61,12 @@ int parse_args(struct config *cfg, char **url, struct http_parser_url *parts, ch
             case 'v':
                 printf("wrk %s [%s] ", VERSION, aeGetApiName());
                 printf("Copyright (C) 2012 Will Glozer\n");
+                break;
+            case 'x':
+                cfg->proxy = optarg;
+                break;
+            case 'U':
+                cfg->proxy_user = optarg;
                 break;
             case 'h':
             case '?':
