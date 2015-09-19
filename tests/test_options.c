@@ -123,7 +123,7 @@ test_parse_args_sets_proxy_user_and_password_with_short_option()
 }
 
 int
-main(int argc, char *argv[])
+main()
 {
 	test_parse_args_sets_url();
 	test_parse_args_sets_proxy_url_and_port_with_long_option();
