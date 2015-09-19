@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "cli_options.h"
 #include "config.h"
 #include "http_parser.h"
 #include "wrk.h"
@@ -18,7 +19,7 @@ static struct option longopts[] = {
     { "latency",     no_argument,       NULL, 'L' },
     { "timeout",     required_argument, NULL, 'T' },
     { "proxy",       required_argument, NULL, 'x' },
-    { "proxy-user",   required_argument, NULL, 'U' },
+    { "proxy-user",  required_argument, NULL, 'U' },
     { "help",        no_argument,       NULL, 'h' },
     { "version",     no_argument,       NULL, 'v' },
     { NULL,          0,                 NULL,  0  }
