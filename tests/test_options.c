@@ -50,7 +50,7 @@ test_parse_args_sets_url()
 }
 
 static void
-test_parse_args_sets_proxy_url_with_long_option()
+test_parse_args_sets_proxy_url_and_port_with_long_option()
 {
 	struct config cfg;
 	char* argv[] = {
@@ -64,11 +64,12 @@ test_parse_args_sets_proxy_url_with_long_option()
 
 	parse_config(&cfg, argc, argv);
 
-	assert(equal_strings(cfg.proxy, "1.2.3.4:8080"));
+	assert(equal_strings(cfg.proxy_addr, "1.2.3.4"));
+	assert(equal_strings(cfg.proxy_port, "8080"));
 }
 
 static void
-test_parse_args_sets_proxy_url_with_short_option()
+test_parse_args_sets_proxy_url_and_port_with_short_option()
 {
 	struct config cfg;
 	char* argv[] = {
@@ -82,11 +83,12 @@ test_parse_args_sets_proxy_url_with_short_option()
 
 	parse_config(&cfg, argc, argv);
 
-	assert(equal_strings(cfg.proxy, "1.2.3.4:8080"));
+	assert(equal_strings(cfg.proxy_addr, "1.2.3.4"));
+	assert(equal_strings(cfg.proxy_port, "8080"));
 }
 
 static void
-test_parse_args_sets_proxy_user_with_long_option()
+test_parse_args_sets_proxy_user_and_password_with_long_option()
 {
 	struct config cfg;
 	char* argv[] = {
@@ -100,11 +102,12 @@ test_parse_args_sets_proxy_user_with_long_option()
 
 	parse_config(&cfg, argc, argv);
 
-	assert(equal_strings(cfg.proxy_user, "user-1:password1"));
+	assert(equal_strings(cfg.proxy_username, "user-1"));
+	assert(equal_strings(cfg.proxy_user_password, "password1"));
 }
 
 static void
-test_parse_args_sets_proxy_user_with_short_option()
+test_parse_args_sets_proxy_user_and_password_with_short_option()
 {
 	struct config cfg;
 	char* argv[] = {
@@ -118,15 +121,16 @@ test_parse_args_sets_proxy_user_with_short_option()
 
 	parse_config(&cfg, argc, argv);
 
-	assert(equal_strings(cfg.proxy_user, "user-1:password1"));
+	assert(equal_strings(cfg.proxy_username, "user-1"));
+	assert(equal_strings(cfg.proxy_user_password, "password1"));
 }
 
 int
 main(int argc, char *argv[])
 {
 	test_parse_args_sets_url();
-	test_parse_args_sets_proxy_url_with_long_option();
-	test_parse_args_sets_proxy_url_with_short_option();
-	test_parse_args_sets_proxy_user_with_long_option();
-	test_parse_args_sets_proxy_user_with_short_option();
+	test_parse_args_sets_proxy_url_and_port_with_long_option();
+	test_parse_args_sets_proxy_url_and_port_with_short_option();
+	test_parse_args_sets_proxy_user_and_password_with_long_option();
+	test_parse_args_sets_proxy_user_and_password_with_short_option();
 }
