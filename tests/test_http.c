@@ -21,10 +21,27 @@ test_make_proxy_auth_header_returns_header_with_base64_encoded_auth_data()
 	header = NULL;
 }
 
+void
+test_append_header_adds_specified_header_to_the_end_of_the_list()
+{
+	char header1[] = "header1: value";
+	char** headers = (char**)malloc(3 * sizeof(char*));
+
+	char** it = headers;
+	*it++ = header1;
+	*it++ = NULL;
+	*it = NULL;
+
+	http_append_header(headers, "header2: value");
+
+	assert(equal_strings(*(++headers), "header2: value"));
+}
+
 int
 main()
 {
 	test_make_proxy_auth_header_returns_header_with_base64_encoded_auth_data();
+	test_append_header_adds_specified_header_to_the_end_of_the_list();
 
 	return 0;
 }
