@@ -58,9 +58,19 @@ int main(int argc, char **argv) {
     }
 
     char *schema  = copy_url_part(url, &parts, UF_SCHEMA);
-    char *host    = copy_url_part(url, &parts, UF_HOST);
-    char *port    = copy_url_part(url, &parts, UF_PORT);
-    char *service = port ? port : schema;
+
+    char *host = NULL;
+    char *service = NULL;
+
+    if (config_proxy_set(&cfg)) {
+        host = cfg.proxy_addr;
+        service = cfg.proxy_port;
+    } else {
+        char *port = copy_url_part(url, &parts, UF_PORT);
+
+        host = copy_url_part(url, &parts, UF_HOST);
+        service = port ? port : schema;
+    }
 
     if (!strncmp("https", schema, 5)) {
         if ((cfg.ctx = ssl_init()) == NULL) {
@@ -82,7 +92,8 @@ int main(int argc, char **argv) {
     statistics.requests = stats_alloc(MAX_THREAD_RATE_S);
     thread *threads     = zcalloc(cfg.threads * sizeof(thread));
 
-    lua_State *L = script_create(cfg.script, url, headers, true, false);
+    lua_State *L = script_create(cfg.script, url, headers, true,
+             config_proxy_set(&cfg));
     if (!script_resolve(L, host, service)) {
         char *msg = strerror(errno);
         fprintf(stderr, "unable to connect to %s:%s %s\n", host, service, msg);
@@ -94,7 +105,8 @@ int main(int argc, char **argv) {
         t->loop        = aeCreateEventLoop(10 + cfg.connections * 3);
         t->connections = cfg.connections / cfg.threads;
 
-        t->L = script_create(cfg.script, url, headers, true, false);
+        t->L = script_create(cfg.script, url, headers, true,
+             config_proxy_set(&cfg));
         script_init(L, t, argc - optind, &argv[optind]);
 
         if (i == 0) {
