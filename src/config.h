@@ -42,4 +42,9 @@ struct config {
  */
 bool config_proxy_set(const struct config* cfg);
 
+/**
+ * Checks if proxy authentication data is set: username and password.
+ */
+bool config_proxy_auth_set(const struct config* cfg);
+
 #endif /* CONFIG_H */
