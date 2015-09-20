@@ -5,6 +5,7 @@
 #include "main.h"
 #include "config.h"
 #include "cli_options.h"
+#include "http.h"
 
 static struct config cfg;
 
@@ -49,12 +50,18 @@ static void usage() {
 }
 
 int main(int argc, char **argv) {
-    char *url, **headers = zmalloc(argc * sizeof(char *));
+    char *url, **headers = zmalloc((argc + 1) * sizeof(char *));
     struct http_parser_url parts = {};
 
     if (parse_args(&cfg, &url, &parts, headers, argc, argv)) {
         usage();
         exit(1);
+    }
+
+    if (config_proxy_auth_set(&cfg)) {
+        char* auth_header = http_make_proxy_basic_auth_header(
+            cfg.proxy_username, cfg.proxy_user_password);
+        http_append_header(headers, auth_header);
     }
 
     char *schema  = copy_url_part(url, &parts, UF_SCHEMA);
