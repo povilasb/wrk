@@ -9,7 +9,13 @@
 #include "stats.h"
 #include "wrk.h"
 
-lua_State *script_create(char *, char *, char **, bool, bool);
+/**
+ * Create new lua virtual machine.
+ *
+ * @param proxy_set if true sets global lua variable "wrk.path" to url.
+ */
+lua_State *script_create(char *file, char *url, char **headers, bool load_wrk,
+	bool proxy_set);
 
 bool script_resolve(lua_State *, char *, char *);
 void script_setup(lua_State *, thread *);
