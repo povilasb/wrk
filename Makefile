@@ -1,4 +1,4 @@
-CFLAGS  := -std=c99 -Wall -O2 -D_REENTRANT
+CFLAGS  := -std=c99 -Wall -O2 -D_REENTRANT -g
 LIBS    := -lpthread -lm -lcrypto -lssl
 
 CMOCKA_DIR := $(CURDIR)/deps/cmocka
@@ -21,8 +21,8 @@ else ifeq ($(TARGET), freebsd)
 	LDFLAGS += -Wl,-E
 endif
 
-SRC  := wrk.c net.c ssl.c aprintf.c stats.c script.c units.c \
-		ae.c zmalloc.c http_parser.c
+SRC  := cli_options.c wrk.c net.c ssl.c aprintf.c stats.c script.c units.c \
+		ae.c zmalloc.c http_parser.c config.c base64.c http.c
 src_files = $(addprefix src/, $(filter-out wrk.c, $(SRC)) )
 BIN  := wrk
 
@@ -40,13 +40,49 @@ clean:
 	$(RM) $(BIN) obj/*
 	@$(MAKE) -C deps/luajit clean
 
-test: $(CMOCKA_LIB)
+test:
 	mkdir -p build/tests
-	$(CC) $(CFLAGS) -I $(CMOCKA_DIR)/include -L$(CMOCKA_LIB_DIR) -lcmocka \
-		tests/test_options.c $(src_files) $(LIBS) $(LDFLAGS) \
-		-o build/tests/test_options
-	LD_LIBRARY_PATH=$(CMOCKA_LIB_DIR) build/tests/test_options
+	$(MAKE) test-options
+	$(MAKE) test-script
+	$(MAKE) test-config
+	$(MAKE) test-base64
+	$(MAKE) test-http
 .PHONY: test
+
+test-options:
+	$(CC) $(CFLAGS) tests/test_options.c $(src_files) $(LIBS) $(LDFLAGS) \
+		-o build/tests/test_options -g
+
+	build/tests/test_options
+.PHONY: test-options
+
+test-script:
+	$(CC) $(CFLAGS) tests/test_script.c $(src_files) $(LIBS) $(LDFLAGS) \
+		-o build/tests/test_script -g
+
+	build/tests/test_script
+.PHONY: test-script
+
+test-config:
+	$(CC) $(CFLAGS) tests/test_config.c $(src_files) $(LIBS) $(LDFLAGS) \
+		-o build/tests/test_config -g
+
+	build/tests/test_config
+.PHONY: test-config
+
+test-base64:
+	$(CC) $(CFLAGS) tests/test_base64.c $(src_files) $(LIBS) $(LDFLAGS) \
+		-o build/tests/test_base64 -g
+
+	build/tests/test_base64
+.PHONY: test-base64
+
+test-http:
+	$(CC) $(CFLAGS) tests/test_http.c $(src_files) $(LIBS) $(LDFLAGS) \
+		-o build/tests/test_http -g
+
+	build/tests/test_http
+.PHONY: test-http
 
 $(CMOCKA_LIB):
 	cd $(CMOCKA_DIR) && mkdir -p build && cd build && cmake .. && make
