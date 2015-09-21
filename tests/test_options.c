@@ -5,13 +5,9 @@
 #include "../src/http_parser.h"
 #include "../src/zmalloc.h"
 
-extern int optind;
+#include "matchers.h"
 
-static int
-equal_strings(const char* str1, const char* str2)
-{
-	return strcmp(str1, str2) == 0;
-}
+extern int optind;
 
 static int
 parse_config(struct config* cfg, int argc, char* argv[])

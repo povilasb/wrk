@@ -3,11 +3,7 @@
 
 #include "../src/http.h"
 
-static int
-equal_strings(const char* str1, const char* str2)
-{
-	return strcmp(str1, str2) == 0;
-}
+#include "matchers.h"
 
 void
 test_make_proxy_auth_header_returns_header_with_base64_encoded_auth_data()
