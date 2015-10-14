@@ -14,4 +14,37 @@
 #include <sys/time.h>
 #endif
 
+#include <stdint.h>
+#include <stdbool.h>
+
+#include <openssl/ssl.h>
+
+
+struct config {
+    uint64_t connections;
+    uint64_t duration;
+    uint64_t threads;
+    uint64_t timeout;
+    uint64_t pipeline;
+    bool     delay;
+    bool     dynamic;
+    bool     latency;
+    char    *script;
+    char     proxy_addr[256];
+    char     proxy_port[16];
+    char     proxy_username[256];
+    char     proxy_user_password[256];
+    SSL_CTX *ctx;
+};
+
+/**
+ * Checks if proxy address and port are set in the specified config structure.
+ */
+bool config_proxy_set(const struct config* cfg);
+
+/**
+ * Checks if proxy authentication data is set: username and password.
+ */
+bool config_proxy_auth_set(const struct config* cfg);
+
 #endif /* CONFIG_H */

@@ -3,19 +3,11 @@
 #include "wrk.h"
 #include "script.h"
 #include "main.h"
+#include "config.h"
+#include "cli_options.h"
+#include "http.h"
 
-static struct config {
-    uint64_t connections;
-    uint64_t duration;
-    uint64_t threads;
-    uint64_t timeout;
-    uint64_t pipeline;
-    bool     delay;
-    bool     dynamic;
-    bool     latency;
-    char    *script;
-    SSL_CTX *ctx;
-} cfg;
+static struct config cfg;
 
 static struct {
     stats *latency;
@@ -58,7 +50,7 @@ static void usage() {
 }
 
 int main(int argc, char **argv) {
-    char *url, **headers = zmalloc(argc * sizeof(char *));
+    char *url, **headers = zmalloc((argc + 1) * sizeof(char *));
     struct http_parser_url parts = {};
 
     if (parse_args(&cfg, &url, &parts, headers, argc, argv)) {
@@ -66,10 +58,26 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    if (config_proxy_auth_set(&cfg)) {
+        char* auth_header = http_make_proxy_basic_auth_header(
+            cfg.proxy_username, cfg.proxy_user_password);
+        http_append_header(headers, auth_header);
+    }
+
     char *schema  = copy_url_part(url, &parts, UF_SCHEMA);
-    char *host    = copy_url_part(url, &parts, UF_HOST);
-    char *port    = copy_url_part(url, &parts, UF_PORT);
-    char *service = port ? port : schema;
+
+    char *host = NULL;
+    char *service = NULL;
+
+    if (config_proxy_set(&cfg)) {
+        host = cfg.proxy_addr;
+        service = cfg.proxy_port;
+    } else {
+        char *port = copy_url_part(url, &parts, UF_PORT);
+
+        host = copy_url_part(url, &parts, UF_HOST);
+        service = port ? port : schema;
+    }
 
     if (!strncmp("https", schema, 5)) {
         if ((cfg.ctx = ssl_init()) == NULL) {
@@ -91,7 +99,8 @@ int main(int argc, char **argv) {
     statistics.requests = stats_alloc(MAX_THREAD_RATE_S);
     thread *threads     = zcalloc(cfg.threads * sizeof(thread));
 
-    lua_State *L = script_create(cfg.script, url, headers);
+    lua_State *L = script_create(cfg.script, url, headers, true,
+             config_proxy_set(&cfg));
     if (!script_resolve(L, host, service)) {
         char *msg = strerror(errno);
         fprintf(stderr, "unable to connect to %s:%s %s\n", host, service, msg);
@@ -103,7 +112,8 @@ int main(int argc, char **argv) {
         t->loop        = aeCreateEventLoop(10 + cfg.connections * 3);
         t->connections = cfg.connections / cfg.threads;
 
-        t->L = script_create(cfg.script, url, headers);
+        t->L = script_create(cfg.script, url, headers, true,
+             config_proxy_set(&cfg));
         script_init(L, t, argc - optind, &argv[optind]);
 
         if (i == 0) {
@@ -459,83 +469,6 @@ static char *copy_url_part(char *url, struct http_parser_url *parts, enum http_p
     }
 
     return part;
-}
-
-static struct option longopts[] = {
-    { "connections", required_argument, NULL, 'c' },
-    { "duration",    required_argument, NULL, 'd' },
-    { "threads",     required_argument, NULL, 't' },
-    { "script",      required_argument, NULL, 's' },
-    { "header",      required_argument, NULL, 'H' },
-    { "latency",     no_argument,       NULL, 'L' },
-    { "timeout",     required_argument, NULL, 'T' },
-    { "help",        no_argument,       NULL, 'h' },
-    { "version",     no_argument,       NULL, 'v' },
-    { NULL,          0,                 NULL,  0  }
-};
-
-static int parse_args(struct config *cfg, char **url, struct http_parser_url *parts, char **headers, int argc, char **argv) {
-    char **header = headers;
-    int c;
-
-    memset(cfg, 0, sizeof(struct config));
-    cfg->threads     = 2;
-    cfg->connections = 10;
-    cfg->duration    = 10;
-    cfg->timeout     = SOCKET_TIMEOUT_MS;
-
-    while ((c = getopt_long(argc, argv, "t:c:d:s:H:T:Lrv?", longopts, NULL)) != -1) {
-        switch (c) {
-            case 't':
-                if (scan_metric(optarg, &cfg->threads)) return -1;
-                break;
-            case 'c':
-                if (scan_metric(optarg, &cfg->connections)) return -1;
-                break;
-            case 'd':
-                if (scan_time(optarg, &cfg->duration)) return -1;
-                break;
-            case 's':
-                cfg->script = optarg;
-                break;
-            case 'H':
-                *header++ = optarg;
-                break;
-            case 'L':
-                cfg->latency = true;
-                break;
-            case 'T':
-                if (scan_time(optarg, &cfg->timeout)) return -1;
-                cfg->timeout *= 1000;
-                break;
-            case 'v':
-                printf("wrk %s [%s] ", VERSION, aeGetApiName());
-                printf("Copyright (C) 2012 Will Glozer\n");
-                break;
-            case 'h':
-            case '?':
-            case ':':
-            default:
-                return -1;
-        }
-    }
-
-    if (optind == argc || !cfg->threads || !cfg->duration) return -1;
-
-    if (!script_parse_url(argv[optind], parts)) {
-        fprintf(stderr, "invalid URL: %s\n", argv[optind]);
-        return -1;
-    }
-
-    if (!cfg->connections || cfg->connections < cfg->threads) {
-        fprintf(stderr, "number of connections must be >= threads\n");
-        return -1;
-    }
-
-    *url    = argv[optind];
-    *header = NULL;
-
-    return 0;
 }
 
 static void print_stats_header() {
